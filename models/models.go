@@ -10,6 +10,7 @@ import (
 )
 
 var db *gorm.DB
+var Testdb *gorm.DB
 
 type Model struct {
 	ID         int `gorm:"primary_key" json:"id"`
@@ -53,6 +54,7 @@ func init() {
 	db.SingularTable(true)
 	db.DB().SetMaxIdleConns(10)
 	db.DB().SetMaxOpenConns(100)
+	Testdb = db
 }
 
 func CloseDB() {

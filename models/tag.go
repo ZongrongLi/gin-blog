@@ -1,10 +1,7 @@
 package models
 
 import (
-	"strconv"
 	"time"
-
-	"github.com/golang/glog"
 
 	"github.com/jinzhu/gorm"
 )
@@ -32,7 +29,6 @@ func (tag *Tag) BeforeUpdate(scope *gorm.Scope) error {
 
 func GetTags(pageNum int, pageSize int, maps interface{}) (tags []Tag) {
 	db.Where(maps).Offset(pageNum).Limit(pageSize).Find(&tags)
-
 	return
 }
 
@@ -52,7 +48,7 @@ func ExistTagByName(name string) bool {
 	return false
 }
 
-func ExistTagById(id string) bool {
+func ExistTagById(id int) bool {
 	var tag Tag
 	db.Select("id").Where("id=?", id).First(&tag)
 
@@ -71,17 +67,12 @@ func AddTag(name string, state int, createBy string) bool {
 	return true
 }
 
-func EditTag(id, name string, state int, modifiedBy string) {
+func EditTag(id int, name string, state int, modifiedBy string) {
 	db.Model(&Tag{}).Where("id = ?", id).Update(&Tag{Name: name, State: state, ModifiedBy: modifiedBy})
 }
 
-func DeleteTag(id string) {
+func DeleteTag(id int) {
 	tag := &Tag{}
-
-	id_, err := strconv.ParseInt(id, 10, 64)
-	if err != nil {
-		glog.Info("convert id failed err:", err)
-	}
-	tag.ID = int(id_)
+	tag.ID = id
 	db.Delete(&tag)
 }
