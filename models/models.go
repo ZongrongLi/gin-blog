@@ -2,8 +2,8 @@ package models
 
 import (
 	"fmt"
-	"log"
 
+	"github.com/golang/glog"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
 	"github.com/tiancai110a/gin-blog/pkg/setting"
@@ -25,7 +25,7 @@ func init() {
 
 	sec, err := setting.Cfg.GetSection("database")
 	if err != nil {
-		log.Fatal(2, "Fail to get section 'database': %v", err)
+		glog.Fatal(2, "Fail to get section 'database': %v", err)
 	}
 
 	dbType = sec.Key("TYPE").String()
@@ -42,7 +42,8 @@ func init() {
 		dbName))
 
 	if err != nil {
-		log.Println(err)
+		//log.Println(err)
+		glog.Error("db not open:", err)
 	}
 
 	gorm.DefaultTableNameHandler = func(db *gorm.DB, defaultTableName string) string {

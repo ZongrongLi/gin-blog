@@ -3,28 +3,13 @@
 	"ignore": "test",
 	"package": [
 		{
+			"checksumSHA1": "+mWpTLP462ZpvSOfcRcnPdBlaxM=",
+			"path": "github.com/astaxie/beego/validation",
+			"revision": ""
+		},
+		{
 			"checksumSHA1": "giewB2MsF6+uckDdN/x39zdnJZI=",
 			"path": "github.com/gin-gonic/gin",
-			"revision": ""
-		},
-		{
-			"checksumSHA1": "SohLqPWFKw8qKTCx4tMpG9bSDPI=",
-			"path": "github.com/gin-gonic/gin/binding",
-			"revision": ""
-		},
-		{
-			"checksumSHA1": "rST0S8cuVbM57VmJhWXhKNUkKTc=",
-			"path": "github.com/gin-gonic/gin/internal/json",
-			"revision": ""
-		},
-		{
-			"checksumSHA1": "4XLWNQHHCyHJCCROC4UXSn7U1OM=",
-			"path": "github.com/gin-gonic/gin/render",
-			"revision": ""
-		},
-		{
-			"checksumSHA1": "NLxrIei+y/HFTknuxPZB0G5UJxk=",
-			"path": "github.com/go-ini/ini",
 			"revision": ""
 		},
 		{
@@ -37,6 +22,12 @@
 			"path": "github.com/go-playground/validator",
 			"revision": "884d31b8cad6a1ec877f2400d555924cea03bbea",
 			"revisionTime": "2019-05-23T14:57:40Z"
+		},
+		{
+			"checksumSHA1": "Y27Agdpf4FN4HGANJ8cp8+Q6VO4=",
+			"path": "github.com/golang/glog",
+			"revision": "23def4e6c14b4da8ac2ed8007337bc5eb5007998",
+			"revisionTime": "2016-01-25T20:49:56Z"
 		},
 		{
 			"checksumSHA1": "CGj8VcI/CpzxaNqlqpEVM7qElD4=",

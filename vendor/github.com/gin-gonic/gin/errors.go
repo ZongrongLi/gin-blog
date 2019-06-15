@@ -6,10 +6,9 @@ package gin
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"reflect"
-
-	"github.com/gin-gonic/gin/internal/json"
 )
 
 // ErrorType is an unsigned 64-bit error code as defined in the gin spec.
