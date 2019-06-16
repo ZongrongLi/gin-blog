@@ -14,6 +14,11 @@
 			"revisionTime": "2018-09-21T17:23:15Z"
 		},
 		{
+			"checksumSHA1": "q9bsaNA05ney3eon3nKAE+eLwO4=",
+			"path": "github.com/fvbock/endless",
+			"revision": ""
+		},
+		{
 			"checksumSHA1": "giewB2MsF6+uckDdN/x39zdnJZI=",
 			"path": "github.com/gin-gonic/gin",
 			"revision": ""
