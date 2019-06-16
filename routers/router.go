@@ -3,6 +3,7 @@ package routers
 import (
 	"github.com/gin-gonic/gin"
 	v1 "github.com/tiancai110a/gin-blog/api/v1"
+	"github.com/tiancai110a/gin-blog/middleware/jwt"
 	"github.com/tiancai110a/gin-blog/pkg/setting"
 )
 
@@ -15,7 +16,9 @@ func InitRouter() *gin.Engine {
 
 	gin.SetMode(setting.RunMode)
 
+	r.GET("/auth", v1.GetAuth)
 	apiv1 := r.Group("/api/v1")
+	apiv1.Use(jwt.JWT())
 	{
 
 		//标签
