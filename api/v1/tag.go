@@ -11,7 +11,12 @@ import (
 	"github.com/tiancai110a/gin-blog/util"
 )
 
-//获取多个文章标签
+// @Summary 获取多个文章标签
+// @Produce  json
+// @Param name query string true "Name"
+// @Param state query int false "State"
+// @Success 200 {string} json "{"code":200,"data":{},"msg":"ok"}"
+// @Router /api/v1/tags [get]
 func GetTags(c *gin.Context) {
 	data := make(map[string]interface{})
 	maps := make(map[string]interface{})
@@ -53,7 +58,13 @@ func GetTags(c *gin.Context) {
 	errnumber = errno.Success
 }
 
-//新增文章标签
+// @Summary 新增文章标签
+// @Produce  json
+// @Param name query string true "Name"
+// @Param state query int false "State"
+// @Param created_by query int false "CreatedBy"
+// @Success 200 {string} json "{"code":200,"data":{},"msg":"ok"}"
+// @Router /api/v1/tags [post]
 func AddTag(c *gin.Context) {
 	valid := validation.Validation{}
 	var errnumber *errno.Errno
@@ -98,7 +109,12 @@ func AddTag(c *gin.Context) {
 
 }
 
-//修改文章标签
+// @Summary 修改文章标签
+// @Produce  json
+// @Param id query string true "id"
+// @Success 200 {string} json "{"code":200,"data":{},"msg":"ok"}"
+// @Router /api/v1/tags [put]
+
 func EditTag(c *gin.Context) {
 	var errnumber *errno.Errno
 	valid := validation.Validation{}
@@ -150,7 +166,11 @@ func EditTag(c *gin.Context) {
 
 }
 
-//删除文章标签
+// @Summary 修改文章标签
+// @Produce  json
+// @Param id query string true "id"
+// @Success 200 {string} json "{"code":200,"data":{},"msg":"ok"}"
+// @Router /api/v1/tags [delete]
 func DeleteTag(c *gin.Context) {
 	valid := validation.Validation{}
 	var errnumber *errno.Errno

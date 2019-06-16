@@ -2,6 +2,8 @@ package routers
 
 import (
 	"github.com/gin-gonic/gin"
+	ginSwagger "github.com/swaggo/gin-swagger"
+	"github.com/swaggo/gin-swagger/swaggerFiles"
 	v1 "github.com/tiancai110a/gin-blog/api/v1"
 	"github.com/tiancai110a/gin-blog/middleware/jwt"
 	"github.com/tiancai110a/gin-blog/pkg/setting"
@@ -15,6 +17,7 @@ func InitRouter() *gin.Engine {
 	r.Use(gin.Recovery())
 
 	gin.SetMode(setting.RunMode)
+	r.GET("/docs/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	r.GET("/auth", v1.GetAuth)
 	apiv1 := r.Group("/api/v1")
@@ -22,7 +25,6 @@ func InitRouter() *gin.Engine {
 	{
 
 		//标签
-
 		apiv1.GET("/tags", v1.GetTags)
 		//新建标签
 		apiv1.POST("/tags", v1.AddTag)

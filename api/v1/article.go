@@ -12,7 +12,12 @@ import (
 	"github.com/tiancai110a/gin-blog/util"
 )
 
-//获取单个文章
+// @Summary 获取单个文章
+// @Produce  json
+// @Param id query string true "id"
+// @Success 200 {string} json "{"code":200,"data":{},"msg":"ok"}"
+// @Router /api/v1/articles/:id [get]
+
 func GetArticle(c *gin.Context) {
 	var errnumber *errno.Errno
 	valid := validation.Validation{}
@@ -44,7 +49,13 @@ func GetArticle(c *gin.Context) {
 
 }
 
-//获取多个文章
+// @Summary 获取多个文章
+// @Produce  json
+// @Param id query string true "id"
+// @Param tagid query string true "tagid"
+// @Success 200 {string} json "{"code":200,"data":{},"msg":"ok"}"
+// @Router /api/v1/articles [get]
+
 func GetArticles(c *gin.Context) {
 	valid := validation.Validation{}
 	var errnumber *errno.Errno
@@ -91,7 +102,22 @@ func GetArticles(c *gin.Context) {
 	data["total"] = models.GetArticleTotal(maps)
 }
 
-//新增文章
+// data := make(map[string]interface{})
+// 	title := util.CheckStringRequired(c, &valid, "title")
+// 	desc := util.CheckStringRequired(c, &valid, "desc")
+// 	content := util.CheckStringRequired(c, &valid, "content")
+// 	createdBy := util.CheckStringRequired(c, &valid, "created_by")
+// @Summary 获取多个文章
+// @Produce  json
+// @Param id query string true "id"
+// @Param tagid query string true "tagid"
+// @Param data query string true "data"
+// @Param title query string true "title"
+// @Param desc query string true "desc"
+// @Param content query string true "content"
+// @Param createdBy query string true "createdBy"
+// @Success 200 {string} json "{"code":200,"data":{},"msg":"ok"}"
+// @Router /api/v1/articles [post]
 func AddArticle(c *gin.Context) {
 	valid := validation.Validation{}
 	var errnumber *errno.Errno
@@ -146,7 +172,22 @@ func AddArticle(c *gin.Context) {
 
 }
 
-//修改文章
+// data := make(map[string]interface{})
+// 	title := util.CheckStringRequired(c, &valid, "title")
+// 	desc := util.CheckStringRequired(c, &valid, "desc")
+// 	content := util.CheckStringRequired(c, &valid, "content")
+// 	createdBy := util.CheckStringRequired(c, &valid, "created_by")
+// @Summary 获取多个文章
+// @Produce  json
+// @Param id query string true "id"
+// @Param tagid query string true "tagid"
+// @Param data query string true "data"
+// @Param title query string true "title"
+// @Param desc query string true "desc"
+// @Param content query string true "content"
+// @Param createdBy query string true "createdBy"
+// @Success 200 {string} json "{"code":200,"data":{},"msg":"ok"}"
+// @Router /api/v1/articles [put]
 func EditArticle(c *gin.Context) {
 	var errnumber *errno.Errno
 	valid := validation.Validation{}
@@ -220,6 +261,17 @@ func EditArticle(c *gin.Context) {
 	return
 
 }
+
+// data := make(map[string]interface{})
+// 	title := util.CheckStringRequired(c, &valid, "title")
+// 	desc := util.CheckStringRequired(c, &valid, "desc")
+// 	content := util.CheckStringRequired(c, &valid, "content")
+// 	createdBy := util.CheckStringRequired(c, &valid, "created_by")
+// @Summary 获取多个文章
+// @Produce  json
+// @Param id query string true "id"
+// @Success 200 {string} json "{"code":200,"data":{},"msg":"ok"}"
+// @Router /api/v1/articles [delete]
 
 //删除文章
 func DeleteArticle(c *gin.Context) {

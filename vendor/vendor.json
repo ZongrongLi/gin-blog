@@ -56,6 +56,16 @@
 			"revision": ""
 		},
 		{
+			"checksumSHA1": "ovPv1bTKJGd8h4Le4lrm/XNOwv8=",
+			"path": "github.com/swaggo/gin-swagger",
+			"revision": ""
+		},
+		{
+			"checksumSHA1": "A1gNAXglJwicLgCC7OIE7+a6KyQ=",
+			"path": "github.com/swaggo/gin-swagger/swaggerFiles",
+			"revision": ""
+		},
+		{
 			"checksumSHA1": "C952qhCJLaMks0dWrawV9RY4Ojo=",
 			"path": "github.com/ugorji/go/codec",
 			"revision": ""
