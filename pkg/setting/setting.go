@@ -13,6 +13,10 @@ var (
 
 	RunMode string
 
+	LOG_LEVEL  string
+	LOG_PATH   string
+	LOG_STDERR string
+
 	HTTPPort     int
 	ReadTimeout  time.Duration
 	WriteTimeout time.Duration
@@ -28,9 +32,19 @@ func init() {
 		glog.Fatalf("Fail to parse 'conf/app.ini': %v", err)
 	}
 
+	LoadLog()
 	LoadBase()
 	LoadServer()
 	LoadApp()
+}
+func LoadLog() {
+	sec, err := Cfg.GetSection("log")
+	if err != nil {
+		glog.Fatalf("Fail to get section 'log': %v", err)
+	}
+	LOG_LEVEL = sec.Key("LEVEL").MustString("0")
+	LOG_PATH = sec.Key("PATH").MustString("./log")
+	LOG_STDERR = sec.Key("STDERR").MustString("true")
 }
 
 func LoadBase() {
