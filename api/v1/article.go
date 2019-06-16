@@ -5,6 +5,7 @@ import (
 
 	"github.com/astaxie/beego/validation"
 	"github.com/gin-gonic/gin"
+	"github.com/golang/glog"
 	"github.com/tiancai110a/gin-blog/models"
 	"github.com/tiancai110a/gin-blog/pkg/errno"
 	"github.com/tiancai110a/gin-blog/pkg/setting"
@@ -27,12 +28,15 @@ func GetArticle(c *gin.Context) {
 
 	id, err := util.ParseAndValidId(c, &valid)
 	if err != nil {
+		glog.Error("id valid fail")
+
 		errnumber = errno.InvalidParams
 		return
 	}
 
 	errnumber = util.CheckError(&valid)
 	if errnumber != errno.Success {
+		glog.Error("validate  error ")
 		return
 	}
 	data = models.GetArticle(int(id))
@@ -57,23 +61,30 @@ func GetArticles(c *gin.Context) {
 
 	state, err := util.ParseAndValidState(c, &valid)
 	if err != nil {
+		glog.Error("state valid fail")
 		errnumber = errno.InvalidParams
 		return
+	}
+
+	if state >= 0 {
+		maps["state"] = state
 	}
 
 	tagid, err := util.ParseAndValidTagId(c, &valid)
 	if err != nil {
+		glog.Error("tagid valid fail")
 		errnumber = errno.InvalidParams
 		return
+	}
+	if tagid >= 0 {
+		maps["tag_id"] = tagid
 	}
 
 	errnumber = util.CheckError(&valid)
 	if errnumber != errno.Success {
+		glog.Error("validate  error ")
 		return
 	}
-
-	maps["tag_id"] = tagid
-	maps["state"] = state
 
 	errnumber = errno.Success
 	data["lists"] = models.GetArticles(util.GetPage(c), setting.PageSize, maps)
@@ -95,12 +106,14 @@ func AddArticle(c *gin.Context) {
 
 	state, err := util.ParseAndValidState(c, &valid)
 	if err != nil {
+		glog.Error("state valid fail")
 		errnumber = errno.InvalidParams
 		return
 	}
 
 	tagId, err := util.ParseAndValidTagId(c, &valid)
 	if err != nil {
+		glog.Error("tagId valid fail")
 		errnumber = errno.InvalidParams
 		return
 	}
@@ -113,10 +126,12 @@ func AddArticle(c *gin.Context) {
 
 	errnumber = util.CheckError(&valid)
 	if errnumber != errno.Success {
+		glog.Error("validate  error ")
 		return
 	}
 
 	if !models.ExistTagById(tagId) {
+		glog.Error("ErrorNotexistTag")
 		errnumber = errno.ErrorNotexistTag
 	}
 
@@ -151,6 +166,7 @@ func EditArticle(c *gin.Context) {
 
 	tagId, err := util.ParseAndValidTagId(c, &valid)
 	if err != nil {
+		glog.Error("InvalidParams")
 		errnumber = errno.InvalidParams
 		return
 	}
@@ -172,10 +188,12 @@ func EditArticle(c *gin.Context) {
 	}
 
 	if !models.ExistArticleById(id) {
+		glog.Error("err exist artcle:", id)
 		errnumber = errno.ErrorNotexistArticle
 		return
 	}
 	if !models.ExistTagById(tagId) {
+		glog.Error("err exist tag:", tagId)
 		errnumber = errno.ErrorExistTag
 		return
 	}

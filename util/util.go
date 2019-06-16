@@ -9,20 +9,21 @@ import (
 	"github.com/tiancai110a/gin-blog/pkg/errno"
 )
 
+//所有的都是 有才验证 没有就不验证 直接返回成功
+
 func ParseAndValidId(c *gin.Context, valid *validation.Validation) (int, error) {
-	var errnumber *errno.Errno
 
 	idStr := c.Param("id")
 	if idStr == "" {
-		return 0, errno.InvalidParams
+		return -1, nil
 	}
 	id, err := strconv.ParseInt(idStr, 10, 64)
 
 	valid.Min(id, 1, "id").Message("ID must >0")
 	if err != nil {
-		errnumber = errno.InvalidParams
+
 		glog.Error("state convert failed! err:", err)
-		return 0, errnumber
+		return 0, errno.InvalidParams
 	}
 	return int(id), nil
 }
@@ -30,33 +31,32 @@ func ParseAndValidId(c *gin.Context, valid *validation.Validation) (int, error) 
 func ParseAndValidTagId(c *gin.Context, valid *validation.Validation) (int, error) {
 	var errnumber *errno.Errno
 
-	idStr := c.Param("tag_id")
+	idStr := c.Query("tag_id")
 	if idStr == "" {
-		return 0, errno.InvalidParams
+		return -1, nil
 	}
 	tagid, err := strconv.ParseInt(idStr, 10, 64)
-
-	valid.Min(tagid, 1, "tag_id").Message("ID must >0")
 	if err != nil {
 		errnumber = errno.InvalidParams
 		glog.Error("state convert failed! err:", err)
 		return 0, errnumber
 	}
+
+	valid.Min(tagid, 1, "tag_id").Message("ID must >0")
+
 	return int(tagid), nil
 }
 func ParseAndValidState(c *gin.Context, valid *validation.Validation) (int, error) {
-	var errnumber *errno.Errno
 
 	stateStr := c.Query("state")
 	if stateStr == "" {
-		return 0, errno.Success
+		return -1, nil
 	}
 	state, err := strconv.ParseInt(stateStr, 10, 64)
 
 	if err != nil {
-		errnumber = errno.InvalidParams
 		glog.Error("state convert failed! err:", err)
-		return 0, errnumber
+		return 0, errno.InvalidParams
 	}
 
 	valid.Range(state, 0, 1, "state").Message("state out of range")
@@ -67,7 +67,7 @@ func ParseAndValidState(c *gin.Context, valid *validation.Validation) (int, erro
 func ParseAndValidString(c *gin.Context, key string, valid *validation.Validation, limit int) (string, error) {
 	value := c.Query(key)
 	valid.Required(value, key).Message(key, "not exist")
-	valid.MaxSize(valid, limit, key).Message(key, "length not more than  100")
+	valid.MaxSize(value, limit, key).Message(key, "length not more than  100")
 	return value, nil
 }
 
