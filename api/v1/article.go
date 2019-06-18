@@ -98,7 +98,7 @@ func GetArticles(c *gin.Context) {
 	}
 
 	errnumber = errno.Success
-	data["lists"] = models.GetArticles(util.GetPage(c), setting.PageSize, maps)
+	data["lists"] = models.GetArticles(util.GetPage(c), setting.AppSetting.PageSize, maps)
 	data["total"] = models.GetArticleTotal(maps)
 }
 

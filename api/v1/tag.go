@@ -51,7 +51,7 @@ func GetTags(c *gin.Context) {
 		return
 	}
 
-	tags := models.GetTags(util.GetPage(c), setting.PageSize, maps)
+	tags := models.GetTags(util.GetPage(c), setting.AppSetting.PageSize, maps)
 	cnt := models.GetTagTotal(maps)
 	data["list"] = tags
 	data["count"] = cnt
