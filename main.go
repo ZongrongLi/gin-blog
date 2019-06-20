@@ -55,7 +55,7 @@ func main() {
 
 	server := endless.NewServer(endPoint, routers.InitRouter())
 	server.BeforeBegin = func(add string) {
-		glog.Info("Actual pid is %d", syscall.Getpid())
+		glog.Infof("Actual pid is %d", syscall.Getpid())
 	}
 
 	err := server.ListenAndServe()

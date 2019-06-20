@@ -14,6 +14,14 @@ var (
 	ErrorAuthCheckTokenTimeOut = &Errno{Code: 20107, Message: "ERROR_AUTH_CHECK_TOKEN_TIMEOUT."}
 	ErrorAuthToken             = &Errno{Code: 20102, Message: "ERROR_AUTH_TOKEN."}
 	ErrorAuth                  = &Errno{Code: 20105, Message: "ERROR_AUTH"}
+
+	//upload
+	// 检查图片失败
+	ErrorUploadCheckImageFail = &Errno{Code: 20106, Message: "ERROR_UPLOAD_CHECK_IMAGE_FAIL"}
+	// 校验图片错误，图片格式或大小有问题
+	ErrorUploadCheckImageFormat = &Errno{Code: 20107, Message: "ERROR_UPLOAD_CHECK_IMAGE_FORMAT"}
+	// 保存图片失败
+	ErrorUploadSaveImageFail = &Errno{Code: 20108, Message: "ERROR_UPLOAD_SAVE_IMAGE_FAIL"}
 )
 
 type Errno struct {
