@@ -1,96 +1,93 @@
 package models
 
+import "github.com/jinzhu/gorm"
+
 type Article struct {
 	Model
 
-	TagID int `json:"tag_id" gorm:"index"`
+	TagId int `json:"tag_id" gorm:"index"`
 	Tag   Tag `json:"tag"`
 
-	Title      string `json:"title"`
-	Desc       string `json:"desc"`
-	Content    string `json:"content"`
-	CreatedBy  string `json:"created_by"`
-	ModifiedBy string `json:"modified_by"`
-	State      int    `json:"state"`
-}
-
-// func (article *Article) BeforeCreate(scope *gorm.Scope) error {
-// 	scope.SetColumn("CreatedOn", time.Now().Unix())
-
-// 	return nil
-// }
-
-// func (article *Article) BeforeUpdate(scope *gorm.Scope) error {
-// 	scope.SetColumn("ModifiedOn", time.Now().Unix())
-
-// 	return nil
-// }
-
-func GetArticle(id int) (article Article) {
-	db.Where("id = ?", id).First(&article)
-	//根据这个实体（article.Tag） 去寻找这个实体的id（tag+ID =tagid）对应的值，然后根据tagid去做关联查询
-	db.Model(&article).Related(&article.Tag)
-	return
-}
-
-func GetArticles(pageNum int, pageSize int, maps interface{}) (articles []Article) {
-	db.Preload("Tag").Where(maps).Offset(pageNum).Limit(pageSize).Find(&articles)
-
-	return
-}
-
-func GetArticleTotal(maps interface{}) (count int) {
-	db.Model(&Article{}).Where(maps).Count(&count)
-
-	return
-}
-
-func ExistArticleByName(name string) bool {
-	var article Article
-	db.Select("id").Where("name=?", name).First(&article)
-
-	if article.ID > 0 {
-		return true
-	}
-	return false
+	Title         string `json:"title"`
+	Desc          string `json:"desc"`
+	Content       string `json:"content"`
+	CoverImageUrl string `json:"cover_image_url"`
+	CreatedBy     string `json:"created_by"`
+	ModifiedBy    string `json:"modified_by"`
+	State         int    `json:"state"`
 }
 
 func ExistArticleById(id int) bool {
 	var article Article
-	db.Select("id").Where("id=?", id).First(&article)
+	err := db.Select("id").Where("id = ? AND deleted_on = ? ", id, 0).First(&article).Error
+	if err != nil && err != gorm.ErrRecordNotFound {
+		return false
+	}
 
-	if article.ID > 0 {
+	if article.Id > 0 {
 		return true
 	}
+
 	return false
 }
 
-func AddArticle(data map[string]interface{}) bool {
-	db.Create(&Article{
-		TagID:     data["tag_id"].(int),
-		Title:     data["title"].(string),
-		Desc:      data["desc"].(string),
-		Content:   data["content"].(string),
-		CreatedBy: data["created_by"].(string),
-		State:     data["state"].(int),
-	})
-	return true
+func GetArticleTotal(maps interface{}) (int, error) {
+	var count int
+	if err := db.Model(&Article{}).Where(maps).Count(&count).Error; err != nil {
+		return 0, err
+	}
+
+	return count, nil
 }
 
-func EditArticle(id int, data interface{}) bool {
-	db.Model(&Article{}).Where("id = ?", id).Updates(data)
+func GetArticles(pageNum int, pageSize int, maps interface{}) ([]*Article, error) {
+	var articles []*Article
+	err := db.Preload("Tag").Where(maps).Offset(pageNum).Limit(pageSize).Find(&articles).Error
+	if err != nil && err != gorm.ErrRecordNotFound {
+		return nil, err
+	}
 
-	return true
+	return articles, nil
 }
 
-func DeleteArticle(id int) {
-	article := &Article{}
+func GetArticle(id int) (*Article, error) {
+	var article Article
+	err := db.Where("id = ? AND deleted_on = ? ", id, 0).First(&article).Related(&article.Tag).Error
+	if err != nil && err != gorm.ErrRecordNotFound {
+		return nil, err
+	}
 
-	article.ID = int(id)
-	db.Delete(&article)
+	return &article, nil
 }
-func CleanAllArticle() bool {
-	db.Unscoped().Where("deleted_on != ? ", 0).Delete(&Article{})
 
-	return true
+func EditArticle(id int, data interface{}) error {
+	if err := db.Model(&Article{}).Where("id = ? AND deleted_on = ? ", id, 0).Updates(data).Error; err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func AddArticle(article Article) error {
+	if err := db.Create(&article).Error; err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func DeleteArticle(id int) error {
+	if err := db.Where("id = ?", id).Delete(Article{}).Error; err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func CleanAllArticle() error {
+	if err := db.Unscoped().Where("deleted_on != ? ", 0).Delete(&Article{}).Error; err != nil {
+		return err
+	}
+
+	return nil
 }

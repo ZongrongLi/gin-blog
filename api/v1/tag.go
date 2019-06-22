@@ -1,11 +1,14 @@
 package v1
 
 import (
+	"github.com/golang/glog"
+	"github.com/tiancai110a/gin-blog/service/tag_service"
 	"net/http"
 
 	"github.com/astaxie/beego/validation"
 	"github.com/gin-gonic/gin"
 	"github.com/tiancai110a/gin-blog/models"
+	"github.com/tiancai110a/gin-blog/pkg/app"
 	"github.com/tiancai110a/gin-blog/pkg/errno"
 	"github.com/tiancai110a/gin-blog/pkg/setting"
 	"github.com/tiancai110a/gin-blog/util"
@@ -19,17 +22,14 @@ import (
 // @Router /api/v1/tags [get]
 func GetTags(c *gin.Context) {
 	data := make(map[string]interface{})
-	maps := make(map[string]interface{})
 	var errnumber *errno.Errno
 	valid := validation.Validation{}
 
+	appG := app.Gin{c}
 	defer func() {
-		c.JSON(http.StatusOK, gin.H{
-			"code": errnumber.Code,
-			"msg":  errnumber.Message,
-			"data": data,
-		})
+		appG.Response(http.StatusOK, errnumber, data)
 	}()
+
 	name, err := util.ParseAndValidString(c, "name", &valid, 100)
 	if err != nil {
 		errnumber = errno.InvalidParams
@@ -42,17 +42,31 @@ func GetTags(c *gin.Context) {
 		return
 	}
 
-	maps["name"] = name
-	maps["state"] = state
-
 	errnumber = util.CheckError(&valid)
 
 	if errnumber != errno.Success {
 		return
 	}
 
-	tags := models.GetTags(util.GetPage(c), setting.AppSetting.PageSize, maps)
-	cnt := models.GetTagTotal(maps)
+	cache := tag_service.Tag{
+		Name:     name,
+		State:    state,
+		PageNum:  util.GetPage(c),
+		PageSize: setting.AppSetting.PageSize,
+	}
+
+	tags, err := cache.Get()
+	if err != nil {
+		glog.Error("tags get failed err:", err)
+		errnumber = errno.ErrorInternel
+		return
+	}
+	cnt, err := cache.Count()
+	if err != nil {
+		glog.Error("tags count get failed err:", err)
+		errnumber = errno.ErrorInternel
+		return
+	}
 	data["list"] = tags
 	data["count"] = cnt
 	errnumber = errno.Success
@@ -68,13 +82,10 @@ func GetTags(c *gin.Context) {
 func AddTag(c *gin.Context) {
 	valid := validation.Validation{}
 	var errnumber *errno.Errno
+	appG := app.Gin{c}
 
 	defer func() {
-		c.JSON(http.StatusOK, gin.H{
-			"code": errnumber.Code,
-			"msg":  errnumber.Message,
-			"data": make(map[string]string),
-		})
+		appG.Response(http.StatusOK, errnumber, make(map[string]string))
 	}()
 
 	name, err := util.ParseAndValidString(c, "name", &valid, 100)
@@ -100,11 +111,21 @@ func AddTag(c *gin.Context) {
 		return
 	}
 
-	if models.ExistTagByName(name) {
+	cache := tag_service.Tag{
+		Name:      name,
+		State:     state,
+		CreatedBy: createdBy,
+	}
+
+	if cache.ExistByName() {
 		errnumber = errno.ErrorExistTag
 		return
 	}
-	models.AddTag(name, int(state), createdBy)
+	err = cache.Add()
+	if err != nil {
+		errnumber = errno.ErrorInternel
+		return
+	}
 	errnumber = errno.Success
 
 }
@@ -155,15 +176,18 @@ func EditTag(c *gin.Context) {
 		return
 	}
 
-	if !models.ExistTagById(id) {
-		errnumber = errno.ErrorNotexistTag
+	cache := tag_service.Tag{
+		Id:         id,
+		Name:       name,
+		State:      state,
+		ModifiedBy: modifiedBy,
+	}
+	if cache.ExistById() {
+		errnumber = errno.ErrorNotExistTag
 		return
 	}
-
+	cache.Edit()
 	errnumber = errno.Success
-
-	models.EditTag(id, name, int(state), modifiedBy)
-
 }
 
 // @Summary 修改文章标签

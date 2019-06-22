@@ -40,7 +40,7 @@ func GetAuth(c *gin.Context) {
 		return
 	}
 
-	if isExist := models.CheckAuth(username, password); !isExist {
+	if isExist, err := models.CheckAuth(username, password); !isExist || err != nil {
 		errnumber = errno.ErrorAuth
 		return
 	}

@@ -4,12 +4,22 @@ import (
 	"net/http"
 
 	"github.com/astaxie/beego/validation"
+	"github.com/boombuler/barcode/qr"
 	"github.com/gin-gonic/gin"
 	"github.com/golang/glog"
 	"github.com/tiancai110a/gin-blog/models"
+	"github.com/tiancai110a/gin-blog/service/article_service"
+	"github.com/tiancai110a/gin-blog/service/tag_service"
+
+	"github.com/tiancai110a/gin-blog/pkg/app"
 	"github.com/tiancai110a/gin-blog/pkg/errno"
+	"github.com/tiancai110a/gin-blog/pkg/qrcode"
 	"github.com/tiancai110a/gin-blog/pkg/setting"
 	"github.com/tiancai110a/gin-blog/util"
+)
+
+const (
+	QRCODE_URL = "https://github.com/EDDYCJY/blog#gin%E7%B3%BB%E5%88%97%E7%9B%AE%E5%BD%95"
 )
 
 // @Summary 获取单个文章
@@ -19,16 +29,13 @@ import (
 // @Router /api/v1/articles/:id [get]
 
 func GetArticle(c *gin.Context) {
-	var errnumber *errno.Errno
+	errnumber := errno.Success
 	valid := validation.Validation{}
 
-	var data models.Article
+	var data *models.Article
+	appG := app.Gin{c}
 	defer func() {
-		c.JSON(http.StatusOK, gin.H{
-			"code": errnumber.Code,
-			"msg":  errnumber.Message,
-			"data": data,
-		})
+		appG.Response(http.StatusOK, errnumber, data)
 	}()
 
 	id, err := util.ParseAndValidId(c, &valid)
@@ -44,9 +51,15 @@ func GetArticle(c *gin.Context) {
 		glog.Error("validate  error ")
 		return
 	}
-	data = models.GetArticle(int(id))
-	errnumber = errno.Success
 
+	cache := article_service.Article{Id: id}
+
+	data, err = cache.Get()
+	if err != nil {
+		glog.Error("get article failed", err)
+		errnumber = errno.ErrorInternel
+		return
+	}
 }
 
 // @Summary 获取多个文章
@@ -58,17 +71,18 @@ func GetArticle(c *gin.Context) {
 
 func GetArticles(c *gin.Context) {
 	valid := validation.Validation{}
-	var errnumber *errno.Errno
+	errnumber := errno.Success
 	data := make(map[string]interface{})
-	maps := make(map[string]interface{})
 
+	appG := app.Gin{c}
 	defer func() {
-		c.JSON(http.StatusOK, gin.H{
-			"code": errnumber.Code,
-			"msg":  errnumber.Message,
-			"data": data,
-		})
+		appG.Response(http.StatusOK, errnumber, data)
 	}()
+
+	cache := article_service.Article{
+		PageNum:  util.GetPage(c),
+		PageSize: setting.AppSetting.PageSize,
+	}
 
 	state, err := util.ParseAndValidState(c, &valid)
 	if err != nil {
@@ -76,9 +90,8 @@ func GetArticles(c *gin.Context) {
 		errnumber = errno.InvalidParams
 		return
 	}
-
 	if state >= 0 {
-		maps["state"] = state
+		cache.State = state
 	}
 
 	tagid, err := util.ParseAndValidTagId(c, &valid)
@@ -88,7 +101,7 @@ func GetArticles(c *gin.Context) {
 		return
 	}
 	if tagid >= 0 {
-		maps["tag_id"] = tagid
+		cache.TagId = tagid
 	}
 
 	errnumber = util.CheckError(&valid)
@@ -98,8 +111,19 @@ func GetArticles(c *gin.Context) {
 	}
 
 	errnumber = errno.Success
-	data["lists"] = models.GetArticles(util.GetPage(c), setting.AppSetting.PageSize, maps)
-	data["total"] = models.GetArticleTotal(maps)
+
+	data["list"], err = cache.GetAll()
+	if err != nil {
+		glog.Error("cache.GetAll() err:", err)
+		errnumber = errno.ErrorGetArticleFailed
+		return
+	}
+	data["total"], err = cache.Count()
+	if err != nil {
+		glog.Error("get articles failed", err)
+		errnumber = errno.ErrorInternel
+		return
+	}
 }
 
 // data := make(map[string]interface{})
@@ -120,14 +144,11 @@ func GetArticles(c *gin.Context) {
 // @Router /api/v1/articles [post]
 func AddArticle(c *gin.Context) {
 	valid := validation.Validation{}
-	var errnumber *errno.Errno
+	errnumber := errno.Success
 
+	appG := app.Gin{c}
 	defer func() {
-		c.JSON(http.StatusOK, gin.H{
-			"code": errnumber.Code,
-			"msg":  errnumber.Message,
-			"data": make(map[string]string),
-		})
+		appG.Response(http.StatusOK, errnumber, make(map[string]string))
 	}()
 
 	state, err := util.ParseAndValidState(c, &valid)
@@ -144,32 +165,39 @@ func AddArticle(c *gin.Context) {
 		return
 	}
 
-	data := make(map[string]interface{})
 	title := util.CheckStringRequired(c, &valid, "title")
 	desc := util.CheckStringRequired(c, &valid, "desc")
 	content := util.CheckStringRequired(c, &valid, "content")
 	createdBy := util.CheckStringRequired(c, &valid, "created_by")
+	coverimageurl := c.Query("cover_image_url")
 
 	errnumber = util.CheckError(&valid)
 	if errnumber != errno.Success {
 		glog.Error("validate  error ")
 		return
 	}
+	tagService := tag_service.Tag{Id: tagId}
 
-	if !models.ExistTagById(tagId) {
-		glog.Error("ErrorNotexistTag")
-		errnumber = errno.ErrorNotexistTag
+	if !tagService.ExistById() {
+		errnumber = errno.ErrorGetExistTagFail
+		return
 	}
 
-	data["tag_id"] = tagId
-	data["title"] = title
-	data["desc"] = desc
-	data["content"] = content
-	data["created_by"] = createdBy
-	data["state"] = state
-
-	models.AddArticle(data)
-
+	cache := article_service.Article{
+		TagId:         tagId,
+		Title:         title,
+		Desc:          desc,
+		Content:       content,
+		CreatedBy:     createdBy,
+		State:         state,
+		CoverImageUrl: coverimageurl,
+	}
+	err = cache.Add()
+	if err != nil {
+		glog.Error("add article failed", err)
+		errnumber = errno.ErrorInternel
+		return
+	}
 }
 
 // data := make(map[string]interface{})
@@ -192,12 +220,9 @@ func EditArticle(c *gin.Context) {
 	var errnumber *errno.Errno
 	valid := validation.Validation{}
 
+	appG := app.Gin{c}
 	defer func() {
-		c.JSON(http.StatusOK, gin.H{
-			"code": errnumber.Code,
-			"msg":  errnumber.Message,
-			"data": make(map[string]string),
-		})
+		appG.Response(http.StatusOK, errnumber, make(map[string]string))
 	}()
 	id, err := util.ParseAndValidId(c, &valid)
 	if err != nil {
@@ -216,6 +241,7 @@ func EditArticle(c *gin.Context) {
 	desc := c.Query("desc")
 	content := c.Query("content")
 	modifiedBy := c.Query("modified_by")
+	coverimageurl := c.Query("cover_image_url")
 
 	valid.MaxSize(title, 100, "title").Message("title length up to 100")
 	valid.MaxSize(desc, 255, "desc").Message("desc length up to 255")
@@ -227,46 +253,52 @@ func EditArticle(c *gin.Context) {
 	if errnumber != errno.Success {
 		return
 	}
-
-	if !models.ExistArticleById(id) {
+	cache := article_service.Article{
+		Id:            id,
+		Title:         title,
+		Desc:          desc,
+		Content:       content,
+		ModifiedBy:    modifiedBy,
+		CoverImageUrl: coverimageurl,
+	}
+	if !cache.ExistById() {
 		glog.Error("err exist artcle:", id)
-		errnumber = errno.ErrorNotexistArticle
-		return
-	}
-	if !models.ExistTagById(tagId) {
-		glog.Error("err exist tag:", tagId)
-		errnumber = errno.ErrorExistTag
+		errnumber = errno.ErrorNotExistArticle
 		return
 	}
 
-	data := make(map[string]interface{})
 	if tagId > 0 {
-		data["tag_id"] = tagId
+		cache.TagId = tagId
+		tagService := tag_service.Tag{Id: tagId}
+		if !tagService.ExistById() {
+			glog.Error("err exist tag:", tagId)
+			errnumber = errno.ErrorExistTag
+			return
+		}
 	}
 	if title != "" {
-		data["title"] = title
+		cache.Title = title
 	}
 	if desc != "" {
-		data["desc"] = desc
+		cache.Desc = desc
 	}
 	if content != "" {
-		data["content"] = content
+		cache.Content = content
 	}
 
-	data["modified_by"] = modifiedBy
+	cache.ModifiedBy = modifiedBy
 
-	models.EditArticle(id, data)
-
+	err = cache.Add()
+	if err != nil {
+		errnumber = errno.ErrorInternel
+		glog.Error("add failed err:", err)
+		return
+	}
 	errnumber = errno.Success
 	return
 
 }
 
-// data := make(map[string]interface{})
-// 	title := util.CheckStringRequired(c, &valid, "title")
-// 	desc := util.CheckStringRequired(c, &valid, "desc")
-// 	content := util.CheckStringRequired(c, &valid, "content")
-// 	createdBy := util.CheckStringRequired(c, &valid, "created_by")
 // @Summary 获取多个文章
 // @Produce  json
 // @Param id query string true "id"
@@ -275,15 +307,12 @@ func EditArticle(c *gin.Context) {
 
 //删除文章
 func DeleteArticle(c *gin.Context) {
-	var errnumber *errno.Errno
+	errnumber := errno.Success
 	valid := validation.Validation{}
 
+	appG := app.Gin{c}
 	defer func() {
-		c.JSON(http.StatusOK, gin.H{
-			"code": errnumber.Code,
-			"msg":  errnumber.Message,
-			"data": make(map[string]string),
-		})
+		appG.Response(http.StatusOK, errnumber, make(map[string]string))
 	}()
 
 	id, err := util.ParseAndValidId(c, &valid)
@@ -296,12 +325,33 @@ func DeleteArticle(c *gin.Context) {
 	if errnumber != errno.Success {
 		return
 	}
-	if !models.ExistArticleById(id) {
-		errnumber = errno.Success
+
+	articleService := article_service.Article{Id: id}
+
+	if !articleService.ExistById() {
+		errnumber = errno.ErrorNotExistArticle
 		return
 	}
-	models.DeleteArticle(id)
+
+	articleService.Delete()
 	errnumber = errno.InvalidParams
 	return
 
+}
+
+func GenerateArticlePoster(c *gin.Context) {
+	errnumber := errno.Success
+	glog.Info("===========================================================GenerateArticlePoster")
+	appG := app.Gin{c}
+	defer func() {
+		appG.Response(http.StatusOK, errnumber, make(map[string]string))
+	}()
+	qrc := qrcode.NewQrCode(QRCODE_URL, 300, 300, qr.M, qr.Auto)
+	path := qrcode.GetQrCodeFullPath()
+	_, _, err := qrc.Encode(path)
+	if err != nil {
+		errnumber = errno.Error
+		return
+	}
+	return
 }
