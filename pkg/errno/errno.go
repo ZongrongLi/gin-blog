@@ -17,6 +17,7 @@ var (
 	ErrorAuth                  = &Errno{Code: 20109, Message: "ERROR_AUTH"}
 	ErrorGetArticleFailed      = &Errno{Code: 20110, Message: "ERROR_GET_ARTICLE_FAAILED"}
 	ErrorInternel              = &Errno{Code: 20111, Message: "Error_INTERNEl"}
+	ErrorGenArticlePosterFail  = &Errno{Code: 20112, Message: "ERROR_GEN_ARTICLE_POSTER_FAIL"}
 
 	//upload
 	// 检查图片失败

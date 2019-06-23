@@ -12,37 +12,40 @@ import (
 
 func JWT() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var errnumber *errno.Errno
+		errnumber := errno.Success
+		status := http.StatusOK
 		var data interface{}
-
-		defer func() {
-			c.JSON(http.StatusUnauthorized, gin.H{
-				"code": errnumber.Code,
-				"msg":  errnumber.Message,
-				"data": data,
-			})
-		}()
 
 		errnumber = errno.Success
 		token := c.Query("token")
 		if token == "" {
 			errnumber = errno.ErrorAuth
+			status = http.StatusUnauthorized
 			c.Abort()
 			return
 		} else {
 			claims, err := util.ParseToken(token)
 			if err != nil {
+				status = http.StatusUnauthorized
 				errnumber = errno.ErrorAuthCheckTokenFail
 			} else if time.Now().Unix() > claims.ExpiresAt {
 				errnumber = errno.ErrorAuthCheckTokenTimeOut
+				status = http.StatusUnauthorized
 			}
 		}
 
 		if errnumber != errno.Success {
+			status = http.StatusUnauthorized
+
+			c.JSON(status, gin.H{
+				"code": errnumber.Code,
+				"msg":  errnumber.Message,
+				"data": data,
+			})
+
 			c.Abort()
 			return
 		}
-
 		c.Next()
 	}
 }

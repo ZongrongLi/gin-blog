@@ -1,6 +1,7 @@
 package routers
 
 import (
+	"github.com/tiancai110a/gin-blog/pkg/qrcode"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -24,6 +25,8 @@ func InitRouter() *gin.Engine {
 	r.GET("/docs/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	r.StaticFS("/upload/images", http.Dir(upload.GetImageFullPath()))
+	r.StaticFS("/qrcode", http.Dir(qrcode.GetQrCodeFullPath()))
+
 	r.POST("/upload", api.UploadImage)
 
 	r.GET("/auth", v1.GetAuth)
