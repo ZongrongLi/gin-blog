@@ -67,6 +67,11 @@
 			"revisionTime": "2019-04-10T03:04:54Z"
 		},
 		{
+			"checksumSHA1": "w01kP96jx5UAf+uWB8m0w8Xghas=",
+			"path": "github.com/golang/freetype",
+			"revision": ""
+		},
+		{
 			"checksumSHA1": "Y27Agdpf4FN4HGANJ8cp8+Q6VO4=",
 			"path": "github.com/golang/glog",
 			"revision": "23def4e6c14b4da8ac2ed8007337bc5eb5007998",
@@ -139,6 +144,11 @@
 		{
 			"checksumSHA1": "C952qhCJLaMks0dWrawV9RY4Ojo=",
 			"path": "github.com/ugorji/go/codec",
+			"revision": ""
+		},
+		{
+			"checksumSHA1": "CQYQ8wELyxPMRYOTDLELVtude/M=",
+			"path": "golang.org/x/image/font",
 			"revision": ""
 		},
 		{

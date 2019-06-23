@@ -1,19 +1,57 @@
 package article_service
 
 import (
+	"github.com/golang/freetype"
+	"github.com/golang/glog"
+	"github.com/tiancai110a/gin-blog/pkg/file"
+	"github.com/tiancai110a/gin-blog/pkg/qrcode"
+	"github.com/tiancai110a/gin-blog/pkg/setting"
 	"image"
 	"image/draw"
 	"image/jpeg"
+	"io/ioutil"
 	"os"
-
-	"github.com/tiancai110a/gin-blog/pkg/file"
-	"github.com/tiancai110a/gin-blog/pkg/qrcode"
 )
 
 type ArticlePoster struct {
 	PosterName string
 	*Article
 	Qr *qrcode.QrCode
+}
+
+type ArticlePosterBg struct {
+	Name string
+	*ArticlePoster
+	*Rect
+	*Pt
+}
+
+type Rect struct {
+	Name string
+	X0   int
+	Y0   int
+	X1   int
+	Y1   int
+}
+
+type Pt struct {
+	X int
+	Y int
+}
+
+type DrawText struct {
+	JPG    draw.Image
+	Merged *os.File
+
+	Title string
+	X0    int
+	Y0    int
+	Size0 float64
+
+	SubTitle string
+	X1       int
+	Y1       int
+	Size1    float64
 }
 
 func NewArticlePoster(posterName string, article *Article, qr *qrcode.QrCode) *ArticlePoster {
@@ -43,26 +81,6 @@ func (a *ArticlePoster) OpenMergedImage(path string) (*os.File, error) {
 	}
 
 	return f, nil
-}
-
-type ArticlePosterBg struct {
-	Name string
-	*ArticlePoster
-	*Rect
-	*Pt
-}
-
-type Rect struct {
-	Name string
-	X0   int
-	Y0   int
-	X1   int
-	Y1   int
-}
-
-type Pt struct {
-	X int
-	Y int
 }
 
 func NewArticlePosterBg(name string, ap *ArticlePoster, rect *Rect, pt *Pt) *ArticlePosterBg {
@@ -114,8 +132,73 @@ func (a *ArticlePosterBg) Generate() (string, string, error) {
 		draw.Draw(jpg, jpg.Bounds(), bgImage, bgImage.Bounds().Min, draw.Over)
 		draw.Draw(jpg, jpg.Bounds(), qrImage, qrImage.Bounds().Min.Sub(image.Pt(a.Pt.X, a.Pt.Y)), draw.Over)
 
-		jpeg.Encode(mergedF, jpg, nil)
+		err = a.DrawPoster(&DrawText{
+			JPG:    jpg,
+			Merged: mergedF,
+
+			Title: "Golang Gin blog",
+			X0:    80,
+			Y0:    160,
+			Size0: 42,
+
+			SubTitle: "---李宗荣",
+			X1:       320,
+			Y1:       220,
+			Size1:    36,
+		}, "msyhbd.ttc")
+
+		if err != nil {
+			glog.Error("drawposter failed err:", err)
+			return "", "", err
+		}
+
+		//jpeg.Encode(mergedF, jpg, nil)
 	}
 
 	return fileName, path, nil
+}
+
+func (a *ArticlePosterBg) DrawPoster(d *DrawText, fontName string) error {
+	fontSource := setting.AppSetting.RuntimeRootPath + setting.AppSetting.FontSavePath + fontName
+	fontSourceBytes, err := ioutil.ReadFile(fontSource)
+	if err != nil {
+		glog.Error("read fonts file failed err:", err)
+		return err
+	}
+
+	trueTypeFont, err := freetype.ParseFont(fontSourceBytes)
+	if err != nil {
+		glog.Error("ParseFont failed err:", err)
+		return err
+	}
+
+	fc := freetype.NewContext()
+	fc.SetDPI(72)
+	fc.SetFont(trueTypeFont)
+	fc.SetFontSize(d.Size0)
+	fc.SetClip(d.JPG.Bounds())
+	fc.SetDst(d.JPG)
+	fc.SetSrc(image.Black)
+
+	pt := freetype.Pt(d.X0, d.Y0)
+	_, err = fc.DrawString(d.Title, pt)
+	if err != nil {
+		glog.Error("DrawString failed err:", err)
+		return err
+	}
+
+	fc.SetFontSize(d.Size1)
+	_, err = fc.DrawString(d.SubTitle, freetype.Pt(d.X1, d.Y1))
+	if err != nil {
+		glog.Error("DrawSubString failed err:", err)
+		return err
+	}
+
+	err = jpeg.Encode(d.Merged, d.JPG, nil)
+	if err != nil {
+		glog.Error("Encode failed err:", err)
+		return err
+	}
+
+	return nil
 }
